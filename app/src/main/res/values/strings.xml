@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Localizer</string>
+
+    <string name="perfil">Mi Perfil</string>
+    <string name="salir">Cerrar Sesion</string>
+
+    <string name="switchText">En Linea</string>
+
+    <string name="logIn">Iniciar Sesion</string>
+    <string name="register">Crear Cuenta</string>
+
+    <string name="nombre">Nombre de Usuario</string>
+    <string name="correo">Correo</string>
+    <string name="pass">Contraseña</string>
+    <string name="telefono">telefono</string>
+</resources>
