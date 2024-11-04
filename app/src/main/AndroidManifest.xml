@@ -45,10 +45,14 @@
             android:name=".ProfileActivity"
             android:exported="false">
         </activity>
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false">
+        </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyD6LAZZcYenvU_Ar46NMi9Q-qpjNz-N2B8"/>
+            android:value="AIzaSyDrh3qWANGOnplUe4u3MISx8pRTV3IDBnQ"/>
     </application>
 
 </manifest>

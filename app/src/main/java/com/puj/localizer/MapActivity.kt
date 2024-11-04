@@ -8,6 +8,7 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -23,6 +24,15 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.puj.localizer.databinding.ActivityMapaBinding
 import com.puj.localizer.R
 
@@ -31,6 +41,11 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationRequest: LocationRequest
     private lateinit var locationCallback: LocationCallback
+    private var auth: FirebaseAuth = Firebase.auth
+
+    val database = FirebaseDatabase.getInstance()
+    val userRef = database.getReference("usuarios")
+    protected var currentUser = auth.currentUser
 
     lateinit var binding: ActivityMapaBinding
 
@@ -90,6 +105,8 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
                 else -> false
             }
         }
+
+        loadMarkers()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -139,5 +156,31 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
     override fun onPause() {
         super.onPause()
         fusedLocationClient.removeLocationUpdates(locationCallback)
+    }
+
+    private fun loadMarkers(){
+        userRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot){
+                for(userSnapshot in snapshot.children){
+                    val nombre = userSnapshot.child("Nombre").getValue(String::class.java)!!
+                    val lat = userSnapshot.child("Posicion").child("Lat").getValue(Double::class.java)!!
+                    val long = userSnapshot.child("Posicion").child("Long").getValue(Double::class.java)!!
+                    val userId = userSnapshot.key
+
+                    if(userId != currentUser?.uid){
+                        val coords = LatLng(lat, long)
+                        if (::mMap.isInitialized) {
+                            mMap.addMarker(
+                                MarkerOptions()
+                                    .position(coords)
+                                    .title(nombre))
+                        }
+                    }
+                }
+            }
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase", "Database error: ${error.message}")
+            }
+        })
     }
 }

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "170150671075",
+    "firebase_url": "https://taller3compumovilcass-default-rtdb.firebaseio.com",
+    "project_id": "taller3compumovilcass",
+    "storage_bucket": "taller3compumovilcass.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170150671075:android:13593d4445327ee8b5cbd6",
+        "android_client_info": {
+          "package_name": "com.puj.localizer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmCxED8MYHeJ9gdwjNlGnzRk-PfE_6eRI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

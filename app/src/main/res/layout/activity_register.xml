@@ -43,6 +43,7 @@
             android:layout_marginBottom="16dp"
             android:backgroundTint="#009688"
             android:hint="Correo electrónico"
+            android:inputType="textEmailAddress"
             android:padding="12dp"
             android:textSize="16sp" />
 
@@ -67,6 +68,17 @@
             android:backgroundTint="#009688"
             android:hint="Confirmar contraseña"
             android:inputType="textPassword"
+            android:padding="12dp"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/phoneEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            android:backgroundTint="#009688"
+            android:hint="Numero de Telefono"
+            android:inputType="number"
             android:padding="12dp"
             android:textSize="16sp" />
 

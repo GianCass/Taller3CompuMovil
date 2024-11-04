@@ -28,5 +28,10 @@ class MainActivity : AppCompatActivity() {
             val intentLog = Intent(this, LogInActivity::class.java)
             startActivity(intentLog)
         }
+
+        binding.register.setOnClickListener {
+            val intentSign = Intent(this, RegisterActivity::class.java)
+            startActivity(intentSign)
+        }
     }
 }
