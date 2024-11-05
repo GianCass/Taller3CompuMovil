@@ -35,6 +35,7 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.puj.localizer.databinding.ActivityMapaBinding
 import com.puj.localizer.R
+import com.puj.localizer.databinding.ActivityMainBinding
 
 class MapActivity: AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
@@ -88,23 +89,16 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
         }
 
         //Barra de navegacion
-        var navegacion = binding.bottomNav
-        navegacion.setOnItemSelectedListener { item ->
-            when(item.itemId){
-                R.id.profile ->{
-                    val intentPerfil = Intent(this, ProfileActivity::class.java)
-                    startActivity(intentPerfil)
-                    true
-                }
 
-                R.id.log_out ->{
-                    val intentSalir = Intent(this, MainActivity::class.java)
-                    startActivity(intentSalir)
-                    true
-                }
-                else -> false
-            }
+        binding.buttonProfile.setOnClickListener{
+
+            val intentLog = Intent(this, ProfileActivity::class.java)
+            startActivity(intentLog)
         }
+      binding.buttonLogout.setOnClickListener{
+          val logoutt = Intent(this, MainActivity::class.java)
+          startActivity(logoutt)
+      }
 
         loadMarkers()
     }

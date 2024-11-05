@@ -55,4 +55,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(libs.firebase.bom)
     implementation(libs.firebase.storage)
+    implementation(libs.glide)
+    annotationProcessor(libs.glide.compiler)
 }
