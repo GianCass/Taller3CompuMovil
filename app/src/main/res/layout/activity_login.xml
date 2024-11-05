@@ -24,7 +24,6 @@
         android:hint="Correo"
         android:inputType="textEmailAddress"
         android:padding="12dp"
-        android:background="@drawable/edittext_background"
         android:layout_marginBottom="16dp"/>
 
     <!-- Campo de texto para Contraseña -->
@@ -35,7 +34,6 @@
         android:hint="Contraseña"
         android:inputType="textPassword"
         android:padding="12dp"
-        android:background="@drawable/edittext_background"
         android:layout_marginBottom="24dp"/>
 
     <!-- Botón de Iniciar Sesión -->

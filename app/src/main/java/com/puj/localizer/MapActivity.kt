@@ -4,9 +4,12 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.hardware.Sensor
-import android.hardware.SensorManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import androidx.core.content.ContextCompat
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.enableEdgeToEdge
@@ -23,6 +26,8 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -33,6 +38,7 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import com.puj.localizer.databinding.ActivityMapaBinding
 import com.puj.localizer.R
 import com.puj.localizer.databinding.ActivityMainBinding
@@ -81,26 +87,42 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 if (::mMap.isInitialized) { // Verificar si mMap ya está inicializado
-                    for (location in locationResult.locations) {
-                        val latLng = LatLng(location.latitude, location.longitude)
+                    if(binding.trackSwitch.isChecked){
+                        for (location in locationResult.locations) {
+                            val currentCoords = mapOf(
+                                "Lat" to location.latitude,
+                                "Long" to location.longitude
+                            )
+
+                            userRef.child(currentUser!!.uid).child("Posicion").setValue(currentCoords)
+                                .addOnFailureListener{ error ->
+                                    Log.e("Firebase", "Error agregando las coordenadas del usuario", error)
+                                }
+                        }
                     }
                 }
             }
         }
-
-        //Barra de navegacion
 
         binding.buttonProfile.setOnClickListener{
 
             val intentLog = Intent(this, ProfileActivity::class.java)
             startActivity(intentLog)
         }
-      binding.buttonLogout.setOnClickListener{
-          val logoutt = Intent(this, MainActivity::class.java)
-          startActivity(logoutt)
+        binding.buttonLogout.setOnClickListener{
+            logout()
       }
 
-        loadMarkers()
+        //Actualizar marcadores
+        userRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                loadMarkers(snapshot)
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("Firebase", "Database error: ${error.message}")
+            }
+        })
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -136,6 +158,11 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
 
     override fun onResume() {
         super.onResume()
+
+        if(auth.currentUser == null){
+            logout()
+        }
+
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -152,29 +179,79 @@ class MapActivity: AppCompatActivity(), OnMapReadyCallback {
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
-    private fun loadMarkers(){
-        userRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot){
-                for(userSnapshot in snapshot.children){
-                    val nombre = userSnapshot.child("Nombre").getValue(String::class.java)!!
-                    val lat = userSnapshot.child("Posicion").child("Lat").getValue(Double::class.java)!!
-                    val long = userSnapshot.child("Posicion").child("Long").getValue(Double::class.java)!!
-                    val userId = userSnapshot.key
+    //Marcadores
+    private fun loadMarkers(snapshot: DataSnapshot){
+        mMap.clear()
 
-                    if(userId != currentUser?.uid){
-                        val coords = LatLng(lat, long)
-                        if (::mMap.isInitialized) {
-                            mMap.addMarker(
-                                MarkerOptions()
-                                    .position(coords)
-                                    .title(nombre))
-                        }
+        for(userSnapshot in snapshot.children){
+            val nombre = userSnapshot.child("Nombre").getValue(String::class.java)!!
+            val lat = userSnapshot.child("Posicion").child("Lat").getValue(Double::class.java)!!
+            val long = userSnapshot.child("Posicion").child("Long").getValue(Double::class.java)!!
+            val userId = userSnapshot.key
+            var icon: BitmapDescriptor?
+
+            val iconDrawable = ContextCompat.getDrawable(this, R.drawable.default_avatar) as BitmapDrawable
+            val iconBitmap = iconDrawable.bitmap
+
+            icon = BitmapDescriptorFactory.fromBitmap(iconBitmap)
+            icon = BitmapDescriptorFactory.fromBitmap(
+                ResizeMarkerIcon(this, iconBitmap, 64, 64)
+            )
+
+            val path = "profile_images/${userId}.jpg"
+            val storageReference = FirebaseStorage.getInstance().reference.child(path)
+
+            storageReference.downloadUrl.addOnSuccessListener { uri ->
+                loadImageFromUri(uri) { bitmap ->
+                    if (bitmap != null) {
+                        icon = BitmapDescriptorFactory.fromBitmap(
+                            ResizeMarkerIcon(this, bitmap, 64, 64)
+                        )
+                    } else {
+                        Log.e("Firebase", "Failed to load the image bitmap")
                     }
                 }
+            }.addOnFailureListener{ exception ->
+                Log.e("Firebase", "Error con la foto de perfil", exception)
             }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("Firebase", "Database error: ${error.message}")
+
+            if(userId != currentUser?.uid){
+                val coords = LatLng(lat, long)
+                if (::mMap.isInitialized) {
+                    mMap.addMarker(
+                        MarkerOptions()
+                            .position(coords)
+                            .title(nombre)
+                            .icon((icon))
+                        )
+                }
             }
-        })
+        }
+    }
+
+    private fun ResizeMarkerIcon(context: Context, drawableId: Bitmap, width: Int, height: Int): Bitmap {
+        return Bitmap.createScaledBitmap(drawableId, width, height, false)
+    }
+
+    //Cerrar sesion
+    protected fun logout(){
+        auth.signOut()
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+
+    private fun loadImageFromUri(uri: Uri, callback: (Bitmap?) -> Unit) {
+        Thread {
+            try {
+                val inputStream = contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                callback(bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                callback(null)
+            }
+        }.start()
     }
 }
